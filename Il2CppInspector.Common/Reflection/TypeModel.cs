@@ -174,10 +174,11 @@ namespace Il2CppInspector.Reflection
             // Create method invokers sourced from generic method invoker indices
             foreach (var spec in GenericMethods.Keys) {
                 if (package.GenericMethodInvokerIndices.TryGetValue(spec, out var index)) {
-                    if (MethodInvokers[index] == null)
-                        MethodInvokers[index] = new MethodInvoker(GenericMethods[spec], index);
-
-                    GenericMethods[spec].Invoker = MethodInvokers[index];
+                    if (index != -1)
+                    {
+                        MethodInvokers[index] ??= new MethodInvoker(GenericMethods[spec], index);
+                        GenericMethods[spec].Invoker = MethodInvokers[index];
+                    }
                 }
             }
 
