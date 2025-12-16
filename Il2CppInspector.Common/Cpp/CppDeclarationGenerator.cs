@@ -419,6 +419,24 @@ public class CppDeclarationGenerator
 
     private readonly HashSet<TypeInfo> _visitedTypes = [];
     private readonly List<TypeInfo> _todoTypeStructs = [];
+    
+    private bool CheckForGenericRecursion(TypeInfo baseType, TypeInfo ti)
+    {
+        foreach (var arg in ti.GenericTypeArguments)
+        {
+            if (CheckForGenericRecursion(baseType, arg))
+                return true;
+        }
+
+        if (ti.IsClass && ti.Index == baseType.Index && ti != baseType)
+        {
+            Debug.WriteLine("Found potential recursion:");
+            Debug.WriteLine(ti.CSharpName + " in " + baseType.CSharpName);
+            return true;
+        }
+
+        return false;
+    }
 
     /// <summary>
     /// Include the given type into this generator. This will add the given type and all types it depends on.
@@ -454,7 +472,11 @@ public class CppDeclarationGenerator
         TypeNamer.GetName(ti);
 
         foreach (var fi in ti.DeclaredFields)
+        {
+            if (ti.IsGenericType && CheckForGenericRecursion(ti, fi.FieldType))
+                continue;
             IncludeType(fi.FieldType);
+        }
 
         foreach (var mi in GetFilledVTable(ti))
         {
